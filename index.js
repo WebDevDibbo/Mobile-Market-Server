@@ -19,6 +19,7 @@ async function run(){
     try{
        const mobileCategories = client.db('mobilemarket').collection('mobileCategories');
        const phonesCollection = client.db('mobilemarket').collection('mobilesCollection');
+       const bookingsCollection = client.db('mobilemarket').collection('bookings');
 
        app.get('/categories',async(req,res)=>{
         const query = {};
@@ -42,6 +43,12 @@ async function run(){
         const result = await phonesCollection.find(filter).toArray();
         console.log(result)
         res.send(result)
+       })
+       app.post('/bookings',async(req,res)=>{
+         
+        const booking = req.body;
+        const result = await bookingsCollection.insertOne(booking);
+        res.send(result);
        })
      }
     finally{
