@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 
@@ -18,11 +18,30 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     try{
        const mobileCategories = client.db('mobilemarket').collection('mobileCategories');
+       const phonesCollection = client.db('mobilemarket').collection('mobilesCollection');
 
        app.get('/categories',async(req,res)=>{
         const query = {};
         const result = await mobileCategories.find(query).toArray();
         res.send(result);
+       })
+       app.get('/categories/:id',async(req,res)=>{
+        const id = req.params.id;
+        const filter = {_id : ObjectId(id)};
+        const result  = await mobileCategories.findOne(filter);
+        res.send(result);
+       })
+       app.get('/products',async(req,res)=>{
+         const query = {};
+         const result = await phonesCollection.find(query).toArray();
+         res.send(result)
+       })
+       app.get('/products/:name',async(req,res)=>{
+        const name= req.params.name;
+        const filter = {categoryName :name};
+        const result = await phonesCollection.find(filter).toArray();
+        console.log(result)
+        res.send(result)
        })
      }
     finally{
