@@ -44,6 +44,19 @@ async function run(){
         console.log(result)
         res.send(result)
        })
+       app.get('/bookings',async(req,res)=>{
+        const email = req.query.email;
+        const query = {email : email}
+        const result = await bookingsCollection.find(query).toArray();
+        res.send(result);
+       })
+       app.get('/bookings/:id',async(req,res)=>{
+        const id = req.params.id;
+        const query = {_id : ObjectId(id)};
+        const booking = await bookingsCollection.findOne(query);
+        res.send(booking)
+       })
+
        app.post('/bookings',async(req,res)=>{
          
         const booking = req.body;
