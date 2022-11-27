@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 require('dotenv').config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 const app = express();
@@ -21,6 +21,7 @@ async function run(){
        const mobileCategories = client.db('mobilemarket').collection('mobileCategories');
        const phonesCollection = client.db('mobilemarket').collection('mobilesCollection');
        const bookingsCollection = client.db('mobilemarket').collection('bookings');
+       const paymentsCollection = client.db('mobilemarket').collection('payments');
 
        app.get('/categories',async(req,res)=>{
         const query = {};
@@ -64,19 +65,40 @@ async function run(){
         const result = await bookingsCollection.insertOne(booking);
         res.send(result);
        })
+
        app.post('/create-payment-intent',async(req,res)=>{
         const booking = req.body;
         const price = booking.price;
         const amount = price * 100;
         const paymentIntent = await stripe.paymentIntents.create({
-          currency:'usd',
+          currency: "usd",
           amount: amount,
-          "payment-method-types":["card"]
+          payment_method_types: [
+            "card"
+          ],
         });
         res.send({
-          clientSecret:paymentIntent.client_secret,
+          clientSecret: paymentIntent.client_secret,
         })
-       });
+      })
+        
+      app.post('/payments',async(req,res)=>{
+        const payment = req.body;
+        const result = await paymentsCollection.insertOne(payment);
+        const id = payment.bookingId;
+        const filter = {_id : ObjectId(id)};
+        const updatedDoc = {
+          $set:{
+            paid: true,
+            transactionId : payment.transactionId
+          }
+        }
+        const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      })
+
+
+
      }
     finally{
 
