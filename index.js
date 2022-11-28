@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
@@ -16,12 +17,28 @@ app.use(express.json())
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gkejsh2.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if(!authHeader){
+    return res.status(401).send("unauthorized access")
+  }
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token,process.env.ACCESS_TOKEN,function(err,decoded){
+    if(err){
+      return res.status(403).send({message:"forbidden access"});
+    }
+    req.decoded = decoded;
+    next();
+  })
+}
+
 async function run(){
     try{
        const mobileCategories = client.db('mobilemarket').collection('mobileCategories');
        const phonesCollection = client.db('mobilemarket').collection('mobilesCollection');
        const bookingsCollection = client.db('mobilemarket').collection('bookings');
        const paymentsCollection = client.db('mobilemarket').collection('payments');
+       const usersCollection = client.db('mobilemarket').collection('users');
 
        app.get('/categories',async(req,res)=>{
         const query = {};
@@ -33,6 +50,11 @@ async function run(){
         const filter = {_id : ObjectId(id)};
         const result  = await mobileCategories.findOne(filter);
         res.send(result);
+       })
+       app.get('/categoriesname',async(req,res)=>{
+        const query = {};
+        const result = await mobileCategories.find(query).project({name:1}).toArray();
+        res.send(result)
        })
        app.get('/products',async(req,res)=>{
          const query = {};
@@ -46,6 +68,26 @@ async function run(){
         console.log(result)
         res.send(result)
        })
+       app.get('/jwt',async(req,res)=>{
+        const email  = req.query.email;
+        const query = {email : email}
+        const user = await usersCollection.findOne(query);
+      
+        if(user && user.email){
+         const token = jwt.sign({email},process.env.ACCESS_TOKEN,{expiresIn:'6h'})
+         console.log(token);
+         return res.send({accessToken:token})
+        }
+        console.log(user)
+        res.status(403).send({accessToken : ""});
+       })
+       app.post('/users',async(req,res)=>{
+        const user = req.body;
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+
+       })
+
        app.get('/bookings',async(req,res)=>{
         const email = req.query.email;
         const query = {email : email}
