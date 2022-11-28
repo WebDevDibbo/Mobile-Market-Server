@@ -68,6 +68,11 @@ async function run(){
         console.log(result)
         res.send(result)
        })
+       app.post('/products',async(req,res)=>{
+        const product = req.body;
+        const result = await phonesCollection.insertOne(product);
+        res.send(result);
+       })
        app.get('/jwt',async(req,res)=>{
         const email  = req.query.email;
         const query = {email : email}
