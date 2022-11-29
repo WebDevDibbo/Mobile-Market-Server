@@ -149,6 +149,17 @@ async function run(){
           }
         }
         const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
+         
+        const productId = payment.productId;
+        const productFilter = {_id : ObjectId(productId)};
+        const updatedProduct = {
+          $set:{
+            sold :true
+          }
+        }
+        const updateProductResult  =  await phonesCollection.updateOne(productFilter, updatedProduct); 
+
+
         res.send(result);
       })
       app.put('/user/verify',async(req,res)=>{
