@@ -68,6 +68,12 @@ async function run(){
         console.log(result)
         res.send(result)
        })
+       app.delete('/products/:id',async(req,res)=>{
+        const id = req.params.id;
+        const filter = {_id :ObjectId(id) };
+        const result = await phonesCollection.deleteOne(filter);
+        res.send(result);
+       })
        app.post('/products',async(req,res)=>{
         const product = req.body;
         const result = await phonesCollection.insertOne(product);
@@ -142,6 +148,11 @@ async function run(){
         }
         const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
         res.send(result);
+      })
+      app.post('/users',async(req,res)=>{
+        const user = req.body;
+        const result = await usersCollection.insertOne(user);
+        res.send(result)
       })
 
 
