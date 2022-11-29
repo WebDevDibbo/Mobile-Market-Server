@@ -56,8 +56,10 @@ async function run(){
         const result = await mobileCategories.find(query).project({name:1}).toArray();
         res.send(result)
        })
+
        app.get('/products',async(req,res)=>{
-         const query = {};
+         const email = req.query.email;
+         const query = {sellersEmail : email};
          const result = await phonesCollection.find(query).toArray();
          res.send(result)
        })
@@ -149,6 +151,26 @@ async function run(){
         const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
         res.send(result);
       })
+      app.put('/user/verify',async(req,res)=>{
+
+        const sellerEmail = req.query.email;
+        const sellerQuery = {email : sellerEmail };
+        const productQuery = {sellersEmail : sellerEmail};
+        const options = {upsert : true};
+        const updatedDoc = {
+          $set:{
+            isVerify :true
+          }
+        }
+        const productResult =  await phonesCollection.updateOne(productQuery, updatedDoc, options);
+        const result = await usersCollection.updateOne(sellerQuery, updatedDoc, options);
+
+        res.send(result);
+
+
+
+
+      })
       app.post('/users',async(req,res)=>{
         const user = req.body;
         const result = await usersCollection.insertOne(user);
@@ -158,6 +180,24 @@ async function run(){
         const query = {};
         const result = await usersCollection.find(query).toArray();
         res.send(result);
+      })
+      app.get('/users/admin/:email',async(req,res)=>{
+          const email = req.params.email;
+          const query = {email : email};
+          const user = await usersCollection.findOne(query);
+          res.send({isAdmin : user?.role === 'admin'});
+      })
+      app.get('/users/buyer/:email',async(req,res)=>{
+          const email = req.params.email;
+          const query = {email : email};
+          const user = await usersCollection.findOne(query);
+          res.send({isBuyer : user?.role === 'Buyer'});
+      })
+      app.get('/users/seller/:email',async(req,res)=>{
+          const email = req.params.email;
+          const query = {email : email};
+          const user = await usersCollection.findOne(query);
+          res.send({isSeller : user?.role === 'Seller'});
       })
 
 
