@@ -17,20 +17,6 @@ app.use(express.json())
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gkejsh2.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-function verifyJWT(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if(!authHeader){
-    return res.status(401).send("unauthorized access")
-  }
-  const token = authHeader.split(' ')[1];
-  jwt.verify(token,process.env.ACCESS_TOKEN,function(err,decoded){
-    if(err){
-      return res.status(403).send({message:"forbidden access"});
-    }
-    req.decoded = decoded;
-    next();
-  })
-}
 
 async function run(){
     try{
@@ -81,19 +67,7 @@ async function run(){
         const result = await phonesCollection.insertOne(product);
         res.send(result);
        })
-       app.get('/jwt',async(req,res)=>{
-        const email  = req.query.email;
-        const query = {email : email}
-        const user = await usersCollection.findOne(query);
-      
-        if(user && user.email){
-         const token = jwt.sign({email},process.env.ACCESS_TOKEN,{expiresIn:'6h'})
-         console.log(token);
-         return res.send({accessToken:token})
-        }
-        console.log(user)
-        res.status(403).send({accessToken : ""});
-       })
+       
        app.post('/users',async(req,res)=>{
         const user = req.body;
         const result = await usersCollection.insertOne(user);
@@ -178,9 +152,6 @@ async function run(){
 
         res.send(result);
 
-
-
-
       })
       app.post('/users',async(req,res)=>{
         const user = req.body;
@@ -210,6 +181,12 @@ async function run(){
           const user = await usersCollection.findOne(query);
           res.send({isSeller : user?.role === 'Seller'});
       })
+      app.delete('/users/:id',async(req,res)=>{
+        const id = req.params.id;
+        const filter = {_id : ObjectId(id)};
+        const result = await usersCollection.deleteOne(filter)
+        res.send(result)
+            })
 
 
 
